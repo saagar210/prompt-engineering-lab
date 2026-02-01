@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Prompt {
+  id           String          @id @default(cuid())
+  title        String
+  content      String
+  systemPrompt String?         @map("system_prompt")
+  category     String?
+  notes        String?
+  isFavorite   Boolean         @default(false) @map("is_favorite")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  versions     PromptVersion[]
+  tags         PromptTag[]
+  responses    Response[]
+  screenshots  Screenshot[]
+  testCases    TestCase[]
+
+  @@map("prompts")
+}
+
+model PromptVersion {
+  id            String   @id @default(cuid())
+  promptId      String   @map("prompt_id")
+  content       String
+  systemPrompt  String?  @map("system_prompt")
+  versionNumber Int      @map("version_number")
+  changeNote    String?  @map("change_note")
+  createdAt     DateTime @default(now()) @map("created_at")
+  prompt        Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@map("prompt_versions")
+}
+
+model PromptTag {
+  id       String @id @default(cuid())
+  promptId String @map("prompt_id")
+  tag      String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, tag])
+  @@map("prompt_tags")
+}
+
+model Response {
+  id            String   @id @default(cuid())
+  promptId      String   @map("prompt_id")
+  modelName     String   @map("model_name")
+  content       String
+  tokenCount    Int?     @map("token_count")
+  executionTime Float?   @map("execution_time")
+  costEstimate  Float?   @map("cost_estimate")
+  source        String   @default("manual")
+  rating        Int?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  prompt        Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@map("responses")
+}
+
+model Screenshot {
+  id            String   @id @default(cuid())
+  promptId      String?  @map("prompt_id")
+  imagePath     String   @map("image_path")
+  extractedText String?  @map("extracted_text")
+  createdAt     DateTime @default(now()) @map("created_at")
+  prompt        Prompt?  @relation(fields: [promptId], references: [id], onDelete: SetNull)
+
+  @@map("screenshots")
+}
+
+model TestCase {
+  id             String    @id @default(cuid())
+  promptId       String    @map("prompt_id")
+  name           String
+  variables      String    // JSON: {"var1":"val1"}
+  expectedOutput String?   @map("expected_output")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  prompt         Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  runs           TestRun[]
+
+  @@map("test_cases")
+}
+
+model TestRun {
+  id            String   @id @default(cuid())
+  testCaseId    String   @map("test_case_id")
+  modelName     String   @map("model_name")
+  output        String
+  passed        Boolean?
+  executionTime Float?   @map("execution_time")
+  createdAt     DateTime @default(now()) @map("created_at")
+  testCase      TestCase @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+
+  @@map("test_runs")
+}
+
+model ApiKey {
+  id           String   @id @default(cuid())
+  provider     String
+  encryptedKey String   @map("encrypted_key")
+  label        String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("api_keys")
+}
+
+model ABComparison {
+  id          String   @id @default(cuid())
+  responseAId String   @map("response_a_id")
+  responseBId String   @map("response_b_id")
+  winnerId    String   @map("winner_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("ab_comparisons")
+}
