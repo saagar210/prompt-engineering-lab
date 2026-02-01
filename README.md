@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Prompt Lab
+
+A full-stack prompt engineering workbench for developing, testing, and comparing LLM prompts across multiple providers. Built with Next.js 16, Prisma, and Material UI.
+
+## What It Does
+
+**Write and iterate on prompts** with a Monaco-powered editor that supports `{{variable}}` template syntax, system prompts, version history with word-level diffs, and one-click version restore.
+
+**Run prompts against any model** — Ollama (local), OpenAI, or Anthropic — with real-time SSE streaming that shows tokens as they arrive. Switch providers with a tab click; variables are auto-detected and filled via dialog before execution.
+
+**Compare responses side-by-side** from different models or prompt versions. Select any two responses for a word-level diff view, or pick A/B winners to track which model performs best.
+
+**Test prompts systematically** with named test cases that define variable values and expected outputs. Run individual tests or batch-run all cases across any model. Pass/fail results are tracked per run.
+
+**Track cost and performance** through an analytics dashboard showing total prompts, responses, versions, and estimated API spend. Charts break down responses by model, average ratings, cost per model, and prompt creation over time.
+
+**Organize with a searchable library** — filter by category, tag, or favorites. Debounced search, pagination, and import/export for portability.
+
+**Extract text from screenshots** using client-side Tesseract.js OCR, then inject the extracted text directly into your prompt.
+
+## Key Strengths
+
+- **Multi-provider with zero lock-in** — Same prompt runs on Ollama, OpenAI, and Anthropic. API keys are AES-256-GCM encrypted at rest, never stored in plaintext.
+- **Real-time streaming** — All three providers stream tokens via SSE with a live preview and blinking cursor. No waiting for the full response.
+- **Template variables** — `{{name}}` syntax auto-detected in prompts and system prompts. Fill values manually or via test cases for repeatable evaluations.
+- **Version control built in** — Every save creates a versioned snapshot with change notes. Compare any two versions with a visual diff and restore with one click.
+- **Response diffing** — Word-level diff view in the compare panel makes it easy to spot how model outputs diverge.
+- **Cost visibility** — Cost estimates calculated per request using provider pricing tables. Aggregated in the analytics dashboard by model.
+- **Keyboard-driven workflow** — Cmd+S save, Cmd+N new prompt, Cmd+K search, Cmd+/ shortcut help. All wired to global listeners.
+- **SQLite by default** — Zero-config local database. No Docker or external services required to get started.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| UI | Material UI 7, Emotion, Recharts |
+| Editor | Monaco Editor |
+| Database | SQLite via Prisma 7 (LibSQL adapter) |
+| LLM Providers | OpenAI SDK, Anthropic SDK, Ollama REST |
+| OCR | Tesseract.js (client-side) |
+| Diff | react-diff-viewer-continued |
+| Language | TypeScript (strict mode) |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Generate Prisma client and run migrations
+npx prisma generate
+npx prisma migrate dev
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The app redirects to the prompt library.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env` file in the project root:
 
-## Learn More
+```env
+# Required — 32-byte hex key for encrypting stored API keys
+ENCRYPTION_SECRET=your-64-char-hex-string
 
-To learn more about Next.js, take a look at the following resources:
+# Optional — Ollama base URL (defaults to http://localhost:11434)
+OLLAMA_BASE_URL=http://localhost:11434
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Optional — Database URL (defaults to SQLite file)
+DATABASE_URL=file:./dev.db
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Generate an encryption secret:
 
-## Deploy on Vercel
+```bash
+openssl rand -hex 32
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Adding API Keys
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Navigate to **Settings** and add your OpenAI or Anthropic API keys. Keys are encrypted before storage and decrypted only at request time.
+
+For local models, install and start [Ollama](https://ollama.com) — the app auto-detects available models.
+
+## Project Structure
+
+```
+src/
+  app/
+    api/          # REST API routes (prompts, responses, providers, analytics, etc.)
+    prompts/      # Prompt editor and library pages
+    analytics/    # Analytics dashboard page
+    compare/      # Response comparison page
+    settings/     # Settings and API key management page
+  components/
+    PromptEditor/ # Monaco editor, prompt form, save/delete/clone
+    ModelRunner/  # Multi-provider tabs, variable filling, streaming
+    Library/      # Searchable prompt grid with filters
+    ResponsePanel/# Response cards with rating, markdown toggle
+    CompareView/  # Side-by-side comparison with diff toggle
+    TestCases/    # Test case CRUD, batch runner
+    Analytics/    # Stat cards, charts (Recharts)
+    Settings/     # API key manager with encryption
+    VersionDiff/  # Version history with visual diff
+  lib/
+    providers/    # OpenAI and Anthropic SDK wrappers (sync + streaming)
+    prisma.ts     # Prisma client singleton
+    encryption.ts # AES-256-GCM encrypt/decrypt
+    templateUtils.ts # {{variable}} extraction and substitution
+```
