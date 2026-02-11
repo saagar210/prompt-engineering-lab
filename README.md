@@ -48,8 +48,7 @@ A full-stack prompt engineering workbench for developing, testing, and comparing
 # Install dependencies
 npm install
 
-# Generate Prisma client and run migrations
-npx prisma generate
+# Run migrations
 npx prisma migrate dev
 
 # Start development server
@@ -57,6 +56,8 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The app redirects to the prompt library.
+
+`npm run dev` and `npm run build` automatically run `prisma generate` first, so the generated client stays in sync after fresh installs.
 
 ### Environment Variables
 
