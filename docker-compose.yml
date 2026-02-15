@@ -1,16 +1,23 @@
-services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: prompt-lab-db
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: promptlab
-      POSTGRES_PASSWORD: promptlab
-      POSTGRES_DB: promptlab
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+version: '3.8'
 
-volumes:
-  pgdata:
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./data/prod.db
+      - ENCRYPTION_SECRET=${ENCRYPTION_SECRET}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/analytics', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
