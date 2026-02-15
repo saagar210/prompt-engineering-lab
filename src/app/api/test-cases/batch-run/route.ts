@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { substituteVariables } from "@/lib/templateUtils";
 import { getDecryptedKey, generateOpenAI, generateAnthropic } from "@/lib/providers";
+import { BatchRunSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { withValidation } from "@/lib/middleware/validation";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
@@ -20,13 +25,10 @@ async function runOllama(model: string, content: string, systemPrompt?: string) 
   };
 }
 
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(BatchRunSchema, async (data, _req) => {
   try {
-    const { promptId, model, provider = "ollama" } = await request.json();
-
-    if (!promptId || !model) {
-      return NextResponse.json({ error: "promptId and model are required" }, { status: 400 });
-    }
+    const { promptId, modelName: model, provider = "ollama" } = data;
 
     const testCases = await prisma.testCase.findMany({
       where: { promptId },
@@ -123,7 +125,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ results });
   } catch (error) {
-    console.error("Batch run error:", error);
-    return NextResponse.json({ error: "Batch run failed" }, { status: 500 });
+    return handleApiError(error);
   }
-}
+});
+
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 5 },
+  withCsrfProtection(postHandler)
+);

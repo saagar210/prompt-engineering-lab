@@ -1,42 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ABComparisonSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { withValidation } from "@/lib/middleware/validation";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
-export async function POST(request: NextRequest) {
-  const { responseAId, responseBId, winnerId } = await request.json();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(ABComparisonSchema, async (data, _req) => {
+  try {
+    // Map schema fields to database fields
+    // For ties, use a special "tie" identifier
+    const winnerId = data.winner === 'A' ? data.responseIdA :
+                     data.winner === 'B' ? data.responseIdB :
+                     'tie';
 
-  if (!responseAId || !responseBId || !winnerId) {
-    return NextResponse.json(
-      { error: "responseAId, responseBId, and winnerId are required" },
-      { status: 400 }
-    );
-  }
-
-  const comparison = await prisma.aBComparison.create({
-    data: { responseAId, responseBId, winnerId },
-  });
-
-  return NextResponse.json(comparison, { status: 201 });
-}
-
-export async function GET(request: NextRequest) {
-  const responseId = new URL(request.url).searchParams.get("responseId");
-
-  if (responseId) {
-    const wins = await prisma.aBComparison.count({
-      where: { winnerId: responseId },
-    });
-    const total = await prisma.aBComparison.count({
-      where: {
-        OR: [{ responseAId: responseId }, { responseBId: responseId }],
+    const comparison = await prisma.aBComparison.create({
+      data: {
+        responseAId: data.responseIdA,
+        responseBId: data.responseIdB,
+        winnerId: winnerId,
       },
     });
-    return NextResponse.json({ responseId, wins, total });
+
+    return NextResponse.json(comparison, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
   }
+});
 
-  const comparisons = await prisma.aBComparison.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  withCsrfProtection(postHandler)
+);
 
-  return NextResponse.json(comparisons);
-}
+const getHandler = async (request: NextRequest) => {
+  try {
+    const responseId = new URL(request.url).searchParams.get("responseId");
+
+    if (responseId) {
+      const wins = await prisma.aBComparison.count({
+        where: { winnerId: responseId },
+      });
+      const total = await prisma.aBComparison.count({
+        where: {
+          OR: [{ responseAId: responseId }, { responseBId: responseId }],
+        },
+      });
+      return NextResponse.json({ responseId, wins, total });
+    }
+
+    const comparisons = await prisma.aBComparison.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+
+    return NextResponse.json(comparisons);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const GET = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  getHandler
+);

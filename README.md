@@ -112,3 +112,62 @@ src/
     encryption.ts # AES-256-GCM encrypt/decrypt
     templateUtils.ts # {{variable}} extraction and substitution
 ```
+
+## Security & Production Features
+
+### Security Hardening
+- ✅ **Rate Limiting**: 10 req/min for LLM generation, 100 req/min for mutations
+- ✅ **CSRF Protection**: Token-based protection for all mutations
+- ✅ **Input Validation**: Zod schema validation on all API endpoints
+- ✅ **API Key Encryption**: AES-256-GCM encryption for stored API keys
+- ✅ **Security Headers**: X-Frame-Options, X-Content-Type-Options, CSP, etc.
+- ✅ **Error Boundaries**: Graceful error handling with user-friendly messages
+
+### Testing & Quality
+- ✅ **Unit Tests**: Jest with React Testing Library (16 tests passing)
+- ✅ **Integration Tests**: API route testing with mocked Prisma
+- ✅ **TypeScript Strict Mode**: Zero compilation errors
+- ✅ **ESLint**: Clean baseline with documented exceptions
+- ✅ **CI/CD**: GitHub Actions workflow for automated verification
+
+### Deployment
+- ✅ **Docker Support**: Multi-stage build with health checks
+- ✅ **Production-Ready**: Non-root user, secure defaults
+- ✅ **Environment Management**: Comprehensive .env.example
+- ✅ **Database Migrations**: Automated with Prisma
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run TypeScript type checking
+npm run typecheck
+
+# Run linter
+npm run lint
+```
+
+## Docker Deployment
+
+```bash
+# Set encryption secret
+export ENCRYPTION_SECRET=$(openssl rand -hex 32)
+
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Or build manually
+docker build -t prompt-lab .
+docker run -p 3000:3000 \
+  -e ENCRYPTION_SECRET=$ENCRYPTION_SECRET \
+  -v $(pwd)/data:/app/data \
+  prompt-lab
+```

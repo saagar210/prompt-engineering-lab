@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
-export async function GET() {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getHandler = async (_request: NextRequest) => {
+  try {
   const prompts = await prisma.prompt.findMany({
     include: {
       tags: true,
@@ -44,10 +48,18 @@ export async function GET() {
     })),
   };
 
-  return new NextResponse(JSON.stringify(exportData, null, 2), {
-    headers: {
-      "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="prompt-lab-export.json"`,
-    },
-  });
-}
+    return new NextResponse(JSON.stringify(exportData, null, 2), {
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Disposition": `attachment; filename="prompt-lab-export.json"`,
+      },
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const GET = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  getHandler
+);

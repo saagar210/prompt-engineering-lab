@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDecryptedKey, generateOpenAI, generateOpenAIStream } from "@/lib/providers";
+import { GenerateRequestSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
-export async function POST(request: NextRequest) {
+const generateHandler = async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { promptId, model, content, systemPrompt, stream } = body;
-
-    if (!promptId || !model || !content) {
-      return NextResponse.json(
-        { error: "promptId, model, and content are required" },
-        { status: 400 }
-      );
-    }
+    const data = GenerateRequestSchema.parse(body);
+    const { promptId, model, content, systemPrompt, stream } = data;
 
     const apiKey = await getDecryptedKey("openai");
     if (!apiKey) {
@@ -104,9 +102,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
     console.error("OpenAI generate error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to generate" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+};
+
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 10 },
+  withCsrfProtection(generateHandler)
+);
