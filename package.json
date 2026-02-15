@@ -17,10 +17,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
-    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@libsql/client": "^0.17.0",
     "@monaco-editor/react": "^4.7.0",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
@@ -41,9 +39,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -53,8 +48,6 @@
     "eslint-config-next": "16.1.6",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "tailwindcss": "^4",
-    "ts-jest": "^29.4.6",
     "typescript": "^5"
   }
 }
