@@ -25,10 +25,12 @@ export const PromptUpdateSchema = z.object({
 
 export const GenerateRequestSchema = z.object({
   promptId: z.string().min(1),
-  modelName: z.string().min(1),
+  model: z.string().min(1),
+  content: z.string().min(1),
+  systemPrompt: z.string().optional(),
+  stream: z.boolean().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().min(1).max(10000).optional(),
-  variables: z.record(z.string(), z.string()).optional(),
 });
 
 export const TestCaseCreateSchema = z.object({

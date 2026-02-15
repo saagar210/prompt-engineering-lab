@@ -23,12 +23,12 @@ export function validateCsrfToken(req: NextRequest, token: string): boolean {
 }
 
 export function withCsrfProtection(
-  handler: (req: NextRequest) => Promise<Response>
+  handler: (req: NextRequest, context?: any) => Promise<Response>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context?: any) => {
     // Skip CSRF for GET/HEAD/OPTIONS
     if (SAFE_METHODS.includes(req.method)) {
-      return await handler(req);
+      return await handler(req, context);
     }
 
     // For mutations, verify CSRF token
@@ -45,7 +45,7 @@ export function withCsrfProtection(
       );
     }
 
-    const response = await handler(req);
+    const response = await handler(req, context);
 
     // Rotate CSRF token after successful request
     const newToken = generateCsrfToken();

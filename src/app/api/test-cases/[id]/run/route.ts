@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { substituteVariables } from "@/lib/templateUtils";
+import { TestRunSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-export async function POST(
+const postHandler = async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-
+) => {
   try {
+    const { id } = await params;
     const testCase = await prisma.testCase.findUnique({
       where: { id },
       include: { prompt: true },
@@ -74,7 +77,11 @@ export async function POST(
 
     return NextResponse.json(testRun, { status: 201 });
   } catch (error) {
-    console.error("Test run error:", error);
-    return NextResponse.json({ error: "Failed to run test" }, { status: 500 });
+    return handleApiError(error);
   }
-}
+};
+
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 20 },
+  withCsrfProtection(postHandler)
+);

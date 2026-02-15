@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import type { PromptInput } from "@/types";
+import { PromptCreateSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { withValidation } from "@/lib/middleware/validation";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
-export async function GET(request: NextRequest) {
+const getPromptsHandler = async (request: NextRequest) => {
+  try {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";
   const category = searchParams.get("category");
@@ -56,33 +61,48 @@ export async function GET(request: NextRequest) {
     limit,
     totalPages: Math.ceil(total / limit),
   });
-}
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
 
-export async function POST(request: NextRequest) {
-  const body: PromptInput = await request.json();
+export const GET = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  getPromptsHandler
+);
 
-  const prompt = await prisma.prompt.create({
-    data: {
-      title: body.title,
-      content: body.content,
-      systemPrompt: body.systemPrompt || null,
-      category: body.category || null,
-      notes: body.notes || null,
-      isFavorite: body.isFavorite || false,
-      tags: body.tags?.length
-        ? { create: body.tags.map((tag: string) => ({ tag })) }
-        : undefined,
-      versions: {
-        create: {
-          content: body.content,
-          systemPrompt: body.systemPrompt || null,
-          versionNumber: 1,
-          changeNote: "Initial version",
+const createPromptHandler = withValidation(PromptCreateSchema, async (data, req) => {
+  try {
+    const prompt = await prisma.prompt.create({
+      data: {
+        title: data.title,
+        content: data.content,
+        systemPrompt: data.systemPrompt || null,
+        category: data.category || null,
+        notes: data.notes || null,
+        isFavorite: data.isFavorite || false,
+        tags: data.tags?.length
+          ? { create: data.tags.map((tag: string) => ({ tag })) }
+          : undefined,
+        versions: {
+          create: {
+            content: data.content,
+            systemPrompt: data.systemPrompt || null,
+            versionNumber: 1,
+            changeNote: "Initial version",
+          },
         },
       },
-    },
-    include: { tags: true, versions: true },
-  });
+      include: { tags: true, versions: true },
+    });
 
-  return NextResponse.json(prompt, { status: 201 });
-}
+    return NextResponse.json(prompt, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
+});
+
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  withCsrfProtection(createPromptHandler)
+);

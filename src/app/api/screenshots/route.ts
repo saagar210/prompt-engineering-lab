@@ -3,10 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
-export async function POST(request: NextRequest) {
+const postHandler = async (request: NextRequest) => {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -36,23 +39,36 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(screenshot, { status: 201 });
   } catch (error) {
-    console.error("Screenshot upload error:", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return handleApiError(error);
   }
-}
+};
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const promptId = searchParams.get("promptId");
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  withCsrfProtection(postHandler)
+);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
-  if (promptId) where.promptId = promptId;
+const getHandler = async (request: NextRequest) => {
+  try {
+    const { searchParams } = new URL(request.url);
+    const promptId = searchParams.get("promptId");
 
-  const screenshots = await prisma.screenshot.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-  });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+    if (promptId) where.promptId = promptId;
 
-  return NextResponse.json(screenshots);
-}
+    const screenshots = await prisma.screenshot.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json(screenshots);
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const GET = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  getHandler
+);

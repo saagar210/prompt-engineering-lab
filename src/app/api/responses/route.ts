@@ -1,22 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import type { ResponseInput } from "@/types";
+import { ResponseCreateSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { withValidation } from "@/lib/middleware/validation";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
-export async function POST(request: NextRequest) {
-  const body: ResponseInput = await request.json();
+const postHandler = withValidation(ResponseCreateSchema, async (data, req) => {
+  try {
+    const response = await prisma.response.create({
+      data: {
+        promptId: data.promptId,
+        modelName: data.modelName,
+        content: data.content,
+        tokenCount: data.tokenCount ?? null,
+        executionTime: data.executionTime ?? null,
+        costEstimate: data.costEstimate ?? null,
+        source: data.source || "manual",
+        rating: data.rating ?? null,
+        notes: data.notes ?? null,
+      },
+    });
 
-  const response = await prisma.response.create({
-    data: {
-      promptId: body.promptId,
-      modelName: body.modelName,
-      content: body.content,
-      tokenCount: body.tokenCount ?? null,
-      executionTime: body.executionTime ?? null,
-      source: body.source || "manual",
-      rating: body.rating ?? null,
-      notes: body.notes ?? null,
-    },
-  });
+    return NextResponse.json(response, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
+});
 
-  return NextResponse.json(response, { status: 201 });
-}
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  withCsrfProtection(postHandler)
+);

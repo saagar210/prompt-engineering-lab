@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { GenerateRequestSchema } from "@/lib/types";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-export async function POST(request: NextRequest) {
+const postHandler = async (request: NextRequest) => {
   try {
     const body = await request.json();
-    const { promptId, model, content, systemPrompt, stream } = body;
-
-    if (!promptId || !model || !content) {
-      return NextResponse.json({ error: "promptId, model, and content are required" }, { status: 400 });
-    }
+    const validatedData = GenerateRequestSchema.parse(body);
+    const { promptId, model, content, systemPrompt, stream } = validatedData;
 
     if (stream) {
       const startTime = Date.now();
@@ -137,7 +138,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error("Ollama generate error:", error);
-    return NextResponse.json({ error: "Failed to generate response" }, { status: 500 });
+    return handleApiError(error);
   }
-}
+};
+
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 10 },
+  withCsrfProtection(postHandler)
+);

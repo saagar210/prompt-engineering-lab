@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { withCsrfProtection } from "@/lib/middleware/csrf";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
 interface ImportPrompt {
   title: string;
@@ -26,7 +29,7 @@ interface ImportPrompt {
   }[];
 }
 
-export async function POST(request: NextRequest) {
+const postHandler = async (request: NextRequest) => {
   try {
     const body = await request.json();
     const prompts: ImportPrompt[] = body.prompts;
@@ -88,7 +91,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, count });
   } catch (error) {
-    console.error("Import error:", error);
-    return NextResponse.json({ error: "Import failed" }, { status: 500 });
+    return handleApiError(error);
   }
-}
+};
+
+export const POST = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  withCsrfProtection(postHandler)
+);

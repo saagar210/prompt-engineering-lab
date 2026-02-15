@@ -23,13 +23,13 @@ export function validateRequest<T>(schema: z.ZodSchema) {
 }
 
 export function withValidation<T>(
-  schema: z.ZodSchema,
+  schema: z.ZodSchema<T>,
   handler: (data: T, req: NextRequest) => Promise<Response>
 ) {
   return async (req: NextRequest) => {
     try {
       const body = await req.json();
-      const data = schema.parse(body) as T;
+      const data = schema.parse(body);
       return await handler(data, req);
     } catch (error) {
       if (error instanceof z.ZodError) {

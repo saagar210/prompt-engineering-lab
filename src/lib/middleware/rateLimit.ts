@@ -43,9 +43,9 @@ export function checkRateLimit(
 
 export function withRateLimit(
   config: RateLimitConfig,
-  handler: (req: NextRequest) => Promise<Response>
+  handler: (req: NextRequest, context?: any) => Promise<Response>
 ) {
-  return async (req: NextRequest) => {
+  return async (req: NextRequest, context?: any) => {
     const key = getRateLimitKey(req);
     const { allowed, resetAt } = checkRateLimit(key, config);
 
@@ -60,6 +60,6 @@ export function withRateLimit(
       );
     }
 
-    return await handler(req);
+    return await handler(req, context);
   };
 }

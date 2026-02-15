@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { withRateLimit } from "@/lib/middleware/rateLimit";
+import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-export async function GET() {
+const getHandler = async (request: NextRequest) => {
   try {
     const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
       signal: AbortSignal.timeout(5000),
@@ -20,7 +22,12 @@ export async function GET() {
     }));
 
     return NextResponse.json(models);
-  } catch {
-    return NextResponse.json({ error: "Cannot connect to Ollama" }, { status: 502 });
+  } catch (error) {
+    return handleApiError(error);
   }
-}
+};
+
+export const GET = withRateLimit(
+  { windowMs: 60000, maxRequests: 100 },
+  getHandler
+);
