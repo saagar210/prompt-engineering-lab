@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { substituteVariables } from "@/lib/templateUtils";
 import { getDecryptedKey, generateOpenAI, generateAnthropic } from "@/lib/providers";
@@ -25,7 +25,8 @@ async function runOllama(model: string, content: string, systemPrompt?: string) 
   };
 }
 
-const postHandler = withValidation(BatchRunSchema, async (data, req) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(BatchRunSchema, async (data, _req) => {
   try {
     const { promptId, modelName: model, provider = "ollama" } = data;
 

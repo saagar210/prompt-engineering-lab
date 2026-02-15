@@ -6,7 +6,8 @@ import { withCsrfProtection } from "@/lib/middleware/csrf";
 import { withValidation } from "@/lib/middleware/validation";
 import { handleApiError } from "@/lib/middleware/errorHandler";
 
-const postHandler = withValidation(ABComparisonSchema, async (data, req) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(ABComparisonSchema, async (data, _req) => {
   try {
     // Map schema fields to database fields
     // For ties, use a special "tie" identifier

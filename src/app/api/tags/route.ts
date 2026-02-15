@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { withRateLimit } from "@/lib/middleware/rateLimit";
 import { handleApiError } from "@/lib/middleware/errorHandler";
 
-const getHandler = async (request: NextRequest) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getHandler = async (_request: NextRequest) => {
   try {
     const tags = await prisma.promptTag.findMany({
       select: { tag: true },

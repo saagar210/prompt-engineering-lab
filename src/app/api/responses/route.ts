@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ResponseCreateSchema } from "@/lib/types";
 import { withRateLimit } from "@/lib/middleware/rateLimit";
@@ -6,7 +6,8 @@ import { withCsrfProtection } from "@/lib/middleware/csrf";
 import { withValidation } from "@/lib/middleware/validation";
 import { handleApiError } from "@/lib/middleware/errorHandler";
 
-const postHandler = withValidation(ResponseCreateSchema, async (data, req) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(ResponseCreateSchema, async (data, _req) => {
   try {
     const response = await prisma.response.create({
       data: {

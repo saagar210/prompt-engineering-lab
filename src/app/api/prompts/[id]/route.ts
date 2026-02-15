@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { PromptUpdateSchema } from "@/lib/types";
 import { withRateLimit } from "@/lib/middleware/rateLimit";
 import { withCsrfProtection } from "@/lib/middleware/csrf";
-import { withValidation } from "@/lib/middleware/validation";
 import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const getPromptHandler = async (

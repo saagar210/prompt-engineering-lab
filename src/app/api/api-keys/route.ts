@@ -7,7 +7,8 @@ import { withCsrfProtection } from "@/lib/middleware/csrf";
 import { withValidation } from "@/lib/middleware/validation";
 import { handleApiError } from "@/lib/middleware/errorHandler";
 
-const getHandler = async (request: NextRequest) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getHandler = async (_request: NextRequest) => {
   try {
     const keys = await prisma.apiKey.findMany({
       orderBy: { createdAt: "desc" },
@@ -33,7 +34,8 @@ export const GET = withRateLimit(
   getHandler
 );
 
-const postHandler = withValidation(ApiKeyCreateSchema, async (data, req) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(ApiKeyCreateSchema, async (data, _req) => {
   try {
     const encryptedKey = encrypt(data.key);
 

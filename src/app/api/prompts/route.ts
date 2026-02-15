@@ -71,7 +71,8 @@ export const GET = withRateLimit(
   getPromptsHandler
 );
 
-const createPromptHandler = withValidation(PromptCreateSchema, async (data, req) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const createPromptHandler = withValidation(PromptCreateSchema, async (data, _req) => {
   try {
     const prompt = await prisma.prompt.create({
       data: {

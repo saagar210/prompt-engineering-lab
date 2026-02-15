@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { substituteVariables } from "@/lib/templateUtils";
-import { TestRunSchema } from "@/lib/types";
 import { withRateLimit } from "@/lib/middleware/rateLimit";
 import { withCsrfProtection } from "@/lib/middleware/csrf";
 import { handleApiError } from "@/lib/middleware/errorHandler";

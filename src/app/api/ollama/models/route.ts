@@ -4,7 +4,8 @@ import { handleApiError } from "@/lib/middleware/errorHandler";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 
-const getHandler = async (request: NextRequest) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getHandler = async (_request: NextRequest) => {
   try {
     const res = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
       signal: AbortSignal.timeout(5000),

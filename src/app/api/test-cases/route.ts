@@ -36,7 +36,8 @@ export const GET = withRateLimit(
   getHandler
 );
 
-const postHandler = withValidation(TestCaseCreateSchema, async (data, req) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const postHandler = withValidation(TestCaseCreateSchema, async (data, _req) => {
   try {
     const testCase = await prisma.testCase.create({
       data: {
