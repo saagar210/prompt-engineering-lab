@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.lean-cache/
 /out/
 
 # production

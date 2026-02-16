@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
+const leanDistDir = process.env.NEXT_DIST_DIR?.trim();
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Allow lean dev mode to redirect transient Next build output.
+  distDir:
+    leanDistDir && !leanDistDir.startsWith("..") ? leanDistDir : ".next",
 };
 
 export default nextConfig;
