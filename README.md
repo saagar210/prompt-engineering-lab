@@ -59,6 +59,38 @@ Open [http://localhost:3000](http://localhost:3000). The app redirects to the pr
 
 `npm run dev` and `npm run build` automatically run `prisma generate` first, so the generated client stays in sync after fresh installs.
 
+### Dev Modes and Cleanup
+
+Use the default mode when you want faster restarts and persistent local build cache:
+
+```bash
+npm run dev
+```
+
+Use lean mode when you want lower steady-state disk usage:
+
+```bash
+npm run lean:dev
+```
+
+`npm run lean:dev` starts the same app but puts Next's build output in a temporary per-run folder and removes it automatically when the process exits.
+
+Cleanup commands:
+
+```bash
+# Remove heavy build artifacts only (safe daily cleanup)
+npm run clean:heavy
+
+# Remove all reproducible local caches (slowest next startup, most disk reclaimed)
+npm run clean:full
+```
+
+Tradeoff summary:
+- `npm run dev`: fastest repeated startup, keeps `.next` cache on disk.
+- `npm run lean:dev`: slightly slower startup after each restart, but avoids long-lived Next build cache growth.
+- `npm run clean:heavy`: best daily disk-control command without deleting dependencies.
+- `npm run clean:full`: maximum reclaim, but next run requires reinstall/regeneration work.
+
 ### Environment Variables
 
 Create a `.env` file in the project root:
